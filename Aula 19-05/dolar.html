@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cotação do Dólar e Conversor</title>
+    <script>
+        let cotacaoDolarAtual = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const btnBuscarCotacao = document.getElementById('btnBuscarCotacaoUSD');
+            const cotacaoDisplay = document.getElementById('cotacaoDisplay');
+            const valorReaisInput = document.getElementById('valorReais');
+            const btnConverter = document.getElementById('btnConverter');
+            const resultadoConversaoDiv = document.getElementById('resultadoConversao');
+
+            btnBuscarCotacao.addEventListener('click', function() {
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', 'https://economia.awesomeapi.com.br/json/last/USD-BRL', true);
+                xhr.onload = function() {
+                    if (xhr.status === 200) {
+                        try {
+                            const resposta = JSON.parse(xhr.responseText);
+                            if (resposta && resposta.USDBRL && resposta.USDBRL.bid) {
+                                cotacaoDolarAtual = parseFloat(resposta.USDBRL.bid);
+                                cotacaoDisplay.textContent = `1 USD = R$ ${cotacaoDolarAtual.toFixed(4)}`;
+                            } else {
+                                cotacaoDisplay.textContent = 'Erro ao obter cotação.';
+                                cotacaoDolarAtual = null;
+                            }
+                        } catch (e) {
+                            cotacaoDisplay.textContent = 'Erro ao processar dados.';
+                            cotacaoDolarAtual = null;
+                        }
+                    } else {
+                        cotacaoDisplay.textContent = 'Falha na requisição: ' + xhr.status;
+                        cotacaoDolarAtual = null;
+                    }
+                };
+                xhr.onerror = function() {
+                    cotacaoDisplay.textContent = 'Erro de rede.';
+                    cotacaoDolarAtual = null;
+                };
+                cotacaoDisplay.textContent = 'Buscando...';
+                xhr.send();
+            });
+
+            btnConverter.addEventListener('click', function() {
+                const valorEmReais = parseFloat(valorReaisInput.value);
+
+                if (isNaN(valorEmReais) || valorEmReais <= 0) {
+                    resultadoConversaoDiv.textContent = 'Digite um valor válido em Reais.';
+                    return;
+                }
+
+                if (cotacaoDolarAtual === null) {
+                    resultadoConversaoDiv.textContent = 'Busque a cotação do dólar primeiro.';
+                    return;
+                }
+
+                const valorEmDolares = valorEmReais / cotacaoDolarAtual;
+                resultadoConversaoDiv.textContent = `R$ ${valorEmReais.toFixed(2)} = US$ ${valorEmDolares.toFixed(2)}`;
+            });
+        });
+    </script>
+</head>
+<body>
+    <div>
+        <h1>Conversor de Moedas: BRL para USD</h1>
+
+        <button id="btnBuscarCotacaoUSD">Mostrar Cotação USD Atual</button>
+        <div id="cotacaoDisplay">Clique no botão acima para ver a cotação.</div>
+
+        <hr>
+
+        <h2>Converter Reais para Dólares</h2>
+        <label for="valorReais">Valor em Reais (R$):</label>
+        <input type="number" id="valorReais" placeholder="Digite o valor em BRL">
+
+        <button id="btnConverter">Converter para Dólares</button>
+        <div id="resultadoConversao"></div>
+    </div>
+</body>
+</html>
